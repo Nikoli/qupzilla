@@ -87,7 +87,7 @@ WebView::WebView(QWidget* parent)
 
 WebView::~WebView()
 {
-    delete m_page;
+    //delete m_page;
 }
 
 QIcon WebView::icon() const
