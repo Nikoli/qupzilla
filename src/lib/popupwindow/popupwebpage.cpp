@@ -43,9 +43,11 @@ PopupWebPage::PopupWebPage(QWebEnginePage::WebWindowType type, BrowserWindow* wi
     , m_progress(0)
 {
     connect(this, SIGNAL(geometryChangeRequested(QRect)), this, SLOT(slotGeometryChangeRequested(QRect)));
+#if QTWEBENGINE_DISABLED
     connect(this, SIGNAL(menuBarVisibilityChangeRequested(bool)), this, SLOT(slotMenuBarVisibilityChangeRequested(bool)));
     connect(this, SIGNAL(toolBarVisibilityChangeRequested(bool)), this, SLOT(slotToolBarVisibilityChangeRequested(bool)));
     connect(this, SIGNAL(statusBarVisibilityChangeRequested(bool)), this, SLOT(slotStatusBarVisibilityChangeRequested(bool)));
+#endif
 
     connect(this, SIGNAL(loadStarted()), this, SLOT(slotLoadStarted()));
     connect(this, SIGNAL(loadProgress(int)), this, SLOT(slotLoadProgress(int)));

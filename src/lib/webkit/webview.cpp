@@ -70,8 +70,10 @@ WebView::WebView(QWidget* parent)
     connect(this, SIGNAL(loadStarted()), this, SLOT(slotLoadStarted()));
     connect(this, SIGNAL(loadProgress(int)), this, SLOT(slotLoadProgress(int)));
     connect(this, SIGNAL(loadFinished(bool)), this, SLOT(slotLoadFinished()));
-    connect(this, SIGNAL(iconChanged()), this, SLOT(slotIconChanged()));
     connect(this, SIGNAL(urlChanged(QUrl)), this, SLOT(slotUrlChanged(QUrl)));
+#if QTWEBENGINE_DISABLED
+    connect(this, SIGNAL(iconChanged()), this, SLOT(slotIconChanged()));
+#endif
 
     m_zoomLevels = zoomLevels();
     m_currentZoomLevel = m_zoomLevels.indexOf(100);

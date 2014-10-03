@@ -57,7 +57,9 @@ void TabbedWebView::setWebPage(WebPage* page)
     page->setParent(this);
     setPage(page);
 
+#if QTWEBENGINE_DISABLED
     connect(page, SIGNAL(linkHovered(QString,QString,QString)), this, SLOT(linkHovered(QString,QString,QString)));
+#endif
 }
 
 BrowserWindow* TabbedWebView::browserWindow() const
@@ -67,15 +69,19 @@ BrowserWindow* TabbedWebView::browserWindow() const
 
 void TabbedWebView::setBrowserWindow(BrowserWindow* window)
 {
+#if QTWEBENGINE_DISABLED
     if (m_window) {
         disconnect(this, SIGNAL(statusBarMessage(QString)), m_window->statusBar(), SLOT(showMessage(QString)));
     }
+#endif
 
     m_window = window;
 
+#if QTWEBENGINE_DISABLED
     if (m_window) {
         connect(this, SIGNAL(statusBarMessage(QString)), m_window->statusBar(), SLOT(showMessage(QString)));
     }
+#endif
 }
 
 void TabbedWebView::inspectElement()
