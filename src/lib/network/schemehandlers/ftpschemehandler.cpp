@@ -22,6 +22,7 @@
 #include "iconprovider.h"
 #include "mainapplication.h"
 
+#if QTWEBENGINE_DISABLED
 #include <QWebSecurityOrigin>
 #include <QFileIconProvider>
 #include <QTextStream>
@@ -546,3 +547,5 @@ void FtpDownloader::onDone(bool err)
         emit finished();
     }
 }
+
+#endif

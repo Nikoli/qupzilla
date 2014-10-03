@@ -197,6 +197,9 @@ MainApplication::MainApplication(int &argc, char** argv)
             appId.append(QLatin1String("Portable"));
         }
 
+        // QtWebEngine
+        appId.append(QL1S("-QtWebEngine"));
+
         // TODO: This should generate some random string for appId
         if (newInstance) {
             if (startProfile.isEmpty() || startProfile == QLatin1String("default")) {
@@ -504,7 +507,11 @@ QNetworkDiskCache* MainApplication::networkCache()
         Settings settings;
         const QString defaultBasePath = QString("%1/networkcache/").arg(DataPaths::currentProfilePath());
         const QString basePath = settings.value("Web-Browser-Settings/CachePath", defaultBasePath).toString();
+#if QTWEBENGINE_DISABLED
         const QString cachePath = QString("%1/%2-Qt%3/").arg(basePath, qWebKitVersion(), qVersion());
+#else
+        const QString cachePath = QString("%1/QtWebEngine/").arg(basePath);
+#endif
 
         m_networkCache = new QNetworkDiskCache(this);
         m_networkCache->setCacheDirectory(cachePath);
@@ -521,6 +528,7 @@ BrowsingLibrary* MainApplication::browsingLibrary()
     return m_browsingLibrary;
 }
 
+#if QTWEBENGINE_DISABLED
 RSSManager* MainApplication::rssManager()
 {
     if (!m_rssManager) {
@@ -528,11 +536,12 @@ RSSManager* MainApplication::rssManager()
     }
     return m_rssManager;
 }
+#endif
 
-NetworkManager* MainApplication::networkManager()
+QNetworkAccessManager* MainApplication::networkManager()
 {
     if (!m_networkManager) {
-        m_networkManager = new NetworkManager(this);
+        m_networkManager = new QNetworkAccessManager(this);
     }
     return m_networkManager;
 }
@@ -624,8 +633,10 @@ void MainApplication::startPrivateBrowsing(const QUrl &startUrl)
 
 void MainApplication::reloadUserStyleSheet()
 {
+#if QTWEBENGINE_DISABLED
     const QUrl userCss = userStyleSheet(Settings().value("Web-Browser-Settings/userStyleSheet", QString()).toString());
-    QWebSettings::globalSettings()->setUserStyleSheetUrl(userCss);
+    QWebEngineSettings::globalSettings()->setUserStyleSheetUrl(userCss);
+#endif
 }
 
 void MainApplication::restoreOverrideCursor()
@@ -678,7 +689,9 @@ void MainApplication::postLaunch()
     }
 
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, DataPaths::currentProfilePath());
-    QWebHistoryInterface::setDefaultInterface(new WebHistoryInterface(this));
+#if QTWEBENGINE_DISABLED
+    QWebEngineHistoryInterface::setDefaultInterface(new WebHistoryInterface(this));
+#endif
 
     connect(this, SIGNAL(messageReceived(QString)), this, SLOT(messageReceived(QString)));
     connect(this, SIGNAL(aboutToQuit()), this, SLOT(saveSettings()));
@@ -746,7 +759,6 @@ void MainApplication::saveSettings()
     }
 
     m_searchEnginesManager->saveSettings();
-    m_networkManager->saveSettings();
     m_plugins->shutdown();
 
     DataPaths::clearTempData();
@@ -833,6 +845,7 @@ void MainApplication::loadSettings()
 
     loadTheme(activeTheme);
 
+#if QTWEBENGINE_DISABLED
     QWebSettings* webSettings = QWebSettings::globalSettings();
 
     // Web browsing settings
@@ -894,9 +907,12 @@ void MainApplication::loadSettings()
 
     webSettings->setWebGraphic(QWebSettings::DefaultFrameIconGraphic, IconProvider::emptyWebIcon().pixmap(16, 16));
     webSettings->setWebGraphic(QWebSettings::MissingImageGraphic, QPixmap());
+#endif
 
     if (isPrivate()) {
+#if QTWEBENGINE_DISABLED
         webSettings->setAttribute(QWebSettings::PrivateBrowsingEnabled, true);
+#endif
         history()->setSaving(false);
     }
 

@@ -82,8 +82,7 @@
 #include <QDesktopServices>
 #include <QPrintPreviewDialog>
 #include <QPrinter>
-#include <QWebFrame>
-#include <QWebHistory>
+#include <QWebEngineHistory>
 #include <QMessageBox>
 #include <QDesktopWidget>
 #include <QToolTip>
@@ -98,7 +97,11 @@
 #include <X11/Xatom.h>
 #endif
 
+#if QTWEBENGINE_DISABLED
 const QString BrowserWindow::WEBKITVERSION = qWebKitVersion();
+#else
+const QString BrowserWindow::WEBKITVERSION = QSL("QtWebEngine");
+#endif
 
 static QKeySequence actionShortcut(QKeySequence shortcut, QKeySequence fallBack, QKeySequence shortcutRTL = QKeySequence(), QKeySequence fallbackRTL = QKeySequence())
 {
@@ -190,6 +193,7 @@ void BrowserWindow::postLaunch()
 
     switch (m_windowType) {
     case Qz::BW_FirstAppWindow:
+#if QTWEBENGINE_DISABLED
         if (mApp->isStartingAfterCrash()) {
             addTab = true;
             startUrl = QUrl("qupzilla:restore");
@@ -197,6 +201,11 @@ void BrowserWindow::postLaunch()
         else if (afterLaunch == 3 && mApp->restoreManager()) {
             addTab = !mApp->restoreSession(this, mApp->restoreManager()->restoreData());
         }
+#else
+        if (afterLaunch == 3 && mApp->restoreManager()) {
+            addTab = !mApp->restoreSession(this, mApp->restoreManager()->restoreData());
+        }
+#endif
         else {
             // Pinned tabs are restored in MainApplication::restoreStateSlot
             // Make sure they will be restored also when not restoring session
@@ -413,7 +422,11 @@ void BrowserWindow::createEncodingSubMenu(const QString &name, QStringList &code
     std::sort(codecNames.begin(), codecNames.end());
 
     QMenu* subMenu = new QMenu(name, menu);
+#if QTWEBENGINE_DISABLED
     const QString activeCodecName = QWebSettings::globalSettings()->defaultTextEncoding();
+#else
+    const QString activeCodecName = QL1S("UTF-8");
+#endif
 
     foreach (const QString &codecName, codecNames) {
         subMenu->addAction(createEncodingAction(codecName, activeCodecName, subMenu));
@@ -654,7 +667,9 @@ void BrowserWindow::changeEncoding()
 {
     if (QAction* action = qobject_cast<QAction*>(sender())) {
         const QString encoding = action->data().toString();
-        QWebSettings::globalSettings()->setDefaultTextEncoding(encoding);
+#if QTWEBENGINE_DISABLED
+        QWebEngineSettings::globalSettings()->setDefaultTextEncoding(encoding);
+#endif
 
         Settings settings;
         settings.setValue("Web-Browser-Settings/DefaultEncoding", encoding);
@@ -728,8 +743,9 @@ void BrowserWindow::showHistoryManager()
     mApp->browsingLibrary()->showHistory(this);
 }
 
-void BrowserWindow::showSource(QWebFrame* frame, const QString &selectedHtml)
+void BrowserWindow::showSource(QWebEngineFrame* frame, const QString &selectedHtml)
 {
+#if QTWEBENGINE_DISABLED
     if (!frame) {
         frame = weView()->page()->mainFrame();
     }
@@ -737,6 +753,7 @@ void BrowserWindow::showSource(QWebFrame* frame, const QString &selectedHtml)
     SourceViewer* source = new SourceViewer(frame, selectedHtml);
     QzTools::centerWidgetToParent(source, this);
     source->show();
+#endif
 }
 
 SideBar* BrowserWindow::addSideBar()
@@ -849,12 +866,14 @@ void BrowserWindow::toggleTabsOnTop(bool enable)
 
 void BrowserWindow::toggleCaretBrowsing()
 {
+#if QTWEBENGINE_DISABLED
 #if QTWEBKIT_FROM_2_3
-    bool enable = !QWebSettings::globalSettings()->testAttribute(QWebSettings::CaretBrowsingEnabled);
+    bool enable = !QWebEngineSettings::globalSettings()->testAttribute(QWebEngineSettings::CaretBrowsingEnabled);
 
     Settings().setValue("Web-Browser-Settings/CaretBrowsing", enable);
 
-    QWebSettings::globalSettings()->setAttribute(QWebSettings::CaretBrowsingEnabled, enable);
+    QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::CaretBrowsingEnabled, enable);
+#endif
 #endif
 }
 
@@ -986,7 +1005,11 @@ void BrowserWindow::createSidebarsMenu(QMenu* menu)
 
 void BrowserWindow::createEncodingMenu(QMenu* menu)
 {
+#if QTWEBENGINE_DISABLED
     const QString activeCodecName = QWebSettings::globalSettings()->defaultTextEncoding();
+#else
+    const QString activeCodecName = QL1S("UTF-8");
+#endif
 
     QStringList isoCodecs, utfCodecs, windowsCodecs, isciiCodecs, otherCodecs;
 
@@ -1175,7 +1198,7 @@ bool BrowserWindow::event(QEvent* event)
     return QMainWindow::event(event);
 }
 
-void BrowserWindow::printPage(QWebFrame* frame)
+void BrowserWindow::printPage(QWebEngineFrame* frame)
 {
     QPrintPreviewDialog* dialog = new QPrintPreviewDialog(this);
     dialog->resize(800, 750);
@@ -1187,9 +1210,11 @@ void BrowserWindow::printPage(QWebFrame* frame)
         connect(dialog, SIGNAL(paintRequested(QPrinter*)), weView(), SLOT(print(QPrinter*)));
     }
     else {
+#if QTWEBENGINE_DISABLED
         dialog->printer()->setDocName(QzTools::getFileNameFromUrl(QzTools::frameUrl(frame)));
 
         connect(dialog, SIGNAL(paintRequested(QPrinter*)), frame, SLOT(print(QPrinter*)));
+#endif
     }
 
     dialog->exec();
@@ -1199,8 +1224,10 @@ void BrowserWindow::printPage(QWebFrame* frame)
 
 void BrowserWindow::savePageScreen()
 {
+#if QTWEBENGINE_DISABLED
     PageScreen* p = new PageScreen(weView(), this);
     p->show();
+#endif
 }
 
 void BrowserWindow::resizeEvent(QResizeEvent* event)
@@ -1392,6 +1419,7 @@ void BrowserWindow::keyPressEvent(QKeyEvent* event)
             m_tabWidget->setCurrentIndex(number - 1);
             return;
         }
+#if QTWEBENGINE_DISABLED
         if (event->modifiers() & Qt::ControlModifier && m_useSpeedDialNumberShortcuts) {
             const QUrl url = mApp->plugins()->speedDial()->urlForShortcut(number - 1);
             if (url.isValid()) {
@@ -1405,6 +1433,7 @@ void BrowserWindow::keyPressEvent(QKeyEvent* event)
             if (number == 2)
                 m_tabWidget->nextTab();
         }
+#endif
     }
 
     QMainWindow::keyPressEvent(event);

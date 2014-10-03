@@ -28,7 +28,6 @@
 
 #include <QVBoxLayout>
 #include <QStatusBar>
-#include <QWebFrame>
 #include <QCloseEvent>
 #include <QMenuBar>
 
@@ -129,9 +128,11 @@ PopupWindow::PopupWindow(PopupWebView* view)
     titleChanged();
 
     QUrl urlToShow = m_view->url();
+#if QTWEBENGINE_DISABLED
     if (urlToShow.isEmpty()) {
         urlToShow = m_view->page()->mainFrame()->requestedUrl();
     }
+#endif
 
     m_locationBar->showUrl(urlToShow);
 
@@ -216,14 +217,14 @@ void PopupWindow::closeEvent(QCloseEvent* event)
 
 void PopupWindow::aboutToShowEditMenu()
 {
-    m_menuEdit->actions().at(0)->setEnabled(m_view->pageAction(QWebPage::Undo)->isEnabled());
-    m_menuEdit->actions().at(1)->setEnabled(m_view->pageAction(QWebPage::Redo)->isEnabled());
+    m_menuEdit->actions().at(0)->setEnabled(m_view->pageAction(QWebEnginePage::Undo)->isEnabled());
+    m_menuEdit->actions().at(1)->setEnabled(m_view->pageAction(QWebEnginePage::Redo)->isEnabled());
     // Separator
-    m_menuEdit->actions().at(3)->setEnabled(m_view->pageAction(QWebPage::Cut)->isEnabled());
-    m_menuEdit->actions().at(4)->setEnabled(m_view->pageAction(QWebPage::Copy)->isEnabled());
-    m_menuEdit->actions().at(5)->setEnabled(m_view->pageAction(QWebPage::Paste)->isEnabled());
+    m_menuEdit->actions().at(3)->setEnabled(m_view->pageAction(QWebEnginePage::Cut)->isEnabled());
+    m_menuEdit->actions().at(4)->setEnabled(m_view->pageAction(QWebEnginePage::Copy)->isEnabled());
+    m_menuEdit->actions().at(5)->setEnabled(m_view->pageAction(QWebEnginePage::Paste)->isEnabled());
     // Separator
-    m_menuEdit->actions().at(7)->setEnabled(m_view->pageAction(QWebPage::SelectAll)->isEnabled());
+    m_menuEdit->actions().at(7)->setEnabled(m_view->pageAction(QWebEnginePage::SelectAll)->isEnabled());
 }
 
 void PopupWindow::aboutToHideEditMenu()
@@ -240,8 +241,10 @@ void PopupWindow::aboutToHideEditMenu()
 
 void PopupWindow::savePageScreen()
 {
+#if QTWEBENGINE_DISABLED
     PageScreen* pageScreen = new PageScreen(m_view, this);
     pageScreen->show();
+#endif
 }
 
 void PopupWindow::searchOnPage()
